@@ -1,0 +1,243 @@
+1. projemize django framework'ünü indiriyoruz.
+    (venv) PS C:\Users\burak\PycharmProjects\YZL3505_Django> python -m pip install django
+
+2. projemize admin tarafını ekliyoruz. bu yapacağımız hamle ile projemizin omurga yapısı oluşacak.
+    (venv) PS C:\Users\burak\PycharmProjects\YZL3505_Django> django-admin startproject meeting_planner
+
+3. projemizi ayağı kaldıralım. "manage.py" dosyasının bulunduğu dizine yürüyoruz.
+    3.1.(venv) PS C:\Users\burak\PycharmProjects\YZL3505_Django> cd meeting_planner
+
+    3.2.(venv) PS C:\Users\burak\PycharmProjects\YZL3505_Django\meeting_planner> python manage.py runserver
+
+4. projemize custom bir app ekliyoruz. bu app vasıtasıyla static yani sabit sayfalarımızı yöneteceğiz.
+    4.1.(venv) PS C:\Users\burak\PycharmProjects\YZL3505_Django\meeting_planner> python manage.py startapp website
+
+5. yukarıda ki adımda açılan yeni app'i settings'te register edelim.
+    5.1. INSTALLED_APPS = [
+            'django.contrib.admin',
+            'django.contrib.auth',
+            'django.contrib.contenttypes',
+            'django.contrib.sessions',
+            'django.contrib.messages',
+            'django.contrib.staticfiles',
+            'website'  => sadece bu satır eklenecek
+        ]
+
+6. website klasörü altında ki views.py ile __init__.py dosyaları hariç alayını silin. Çünkü website kısmında static sayfaları yöneteceğiz. Herhangi bir model buna bağlı göç işlemleri yapmayacağız yada admin tarafıyla konuşmayacak.
+
+7. website => views.py dosyasına aşağıdaki kodları ekleyin
+    from django.http import HttpResponse
+
+    def welcome(request):
+        return HttpResponse('Welcome to the Meeting Planner App')
+
+8. meeting_planner => urls.py dosyasına aşağıda ki kodları ekleyin
+
+    from website.views import welcome
+
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('welcome.html', welcome),
+    ]
+
+    Not: yukarıda ki adımı about ve date için yapın.
+
+
+9. projemizde ki entity'lerimizin CRUD operasyonlarını yaparken kullanacağımız app'imizi ekleyelim
+    9.1. (venv) PS C:\Users\burak\PycharmProjects\YZL3505_Django\meeting_planner> python manage.py startapp meetings
+    9.2  meeting_planner => settings.py => INSTALLED_APPS listesine yeni yaratılan app ekliyoruz.
+
+10. meetings => models.py dosyasında veri tabanında göç ettirilecek varlıklarımızı oluşturuyoruz.
+
+    class Room(models.Model):
+        name = models.CharField(max_length=50)
+        floor = models.CharField(max_length=50)
+        room_number = models.IntegerField()
+
+        def __str__(self):
+            return (f'{self.name}: room '
+                    f'{self.room_number} on floor '
+                    f'{self.floor}')
+
+        class Meta:
+            verbose_name_plural = 'rooms'
+
+
+    class Meeting(models.Model):
+        title = models.CharField(max_length=200)
+        date = models.DateField()
+        start_time = models.TimeField(default=time(9))
+        duration = models.IntegerField(default=1)
+        room = models.ForeignKey(Room, on_delete=models.CASCADE)
+
+        def __str__(self):
+            return (f'{self.title} at '
+                    f'{self.start_time} on '
+                    f'{self.date}')
+
+        class Meta:
+            verbose_name_plural = 'meetings'
+
+
+11. göç işlemine başlayabiliriz.
+    11.1.  PS C:\Users\burak\PycharmProjects\YZL3505_Django\meeting_planner> python manage.py makemigrations
+    11.2. (venv) PS C:\Users\burak\PycharmProjects\YZL3505_Django\meeting_planner> python manage.py migrate
+
+
+12. meetings => admin.py dosyasına aşağıdaki kodları ekleyin
+    from .models import Meeting, Room
+
+    admin.site.register(Meeting)
+    admin.site.register(Room)
+
+
+13. projenin admin site giriş yapabilmek için bir admin kullanıcısı yaratıyoruz
+    13.1.(venv) PS C:\Users\burak\PycharmProjects\YZL3505_Django\meeting_planner> python manage.py createsuperuser
+
+14. Bütün toplantıların bilgilerini ve toplantı sayısını ana ekranda yazdıralım
+    14.1. website => views.py => welcome() düzenleyin.
+
+    def welcome(request):
+    return render(request=request,
+                  template_name='website/welcome.html',
+                  context={
+                      'message': 'This data was sent from the views to the template',
+                      'num_meetings': Meeting.objects.count(),
+                      'meetings': Meeting.objects.all()
+                  })
+
+15. Satın alınmış yada hazırlanmış frontend uygulamasını projeye giydirme.
+    15.1. website => templates adında bir klasör açılyoruz.
+    15.2. website => templates => base.html file açılır.
+    15.3. Boostrap ile hazırlanmış frontend projesi base.html sayfasına giydirilir.
+
+16.frondend projesinin sahip olduğu css vs js dosyalarını saklamak için aşağıda ki adımları takip ediniz.
+    16.1. meeting_planner => static adında bir klasör açılır.
+    16.2. meeting_planner => static => css adında bir klasör açılır.
+    16.3. meeting_planner => static => js adında bir klasör açılır.
+    16.4. meeting_planner => meeting_planner => settings.py dosyasına aşağıda ki kodları ekleyin. Burada yapılan işlem ile static klasörümüzün yolunu settings içersine kayıt edeiyoruz. Böylelikle uzun uzun css vs js dosyalarının ismlerini yazmayacağız.
+        STATICFILES_DIRS = [
+            BASE_DIR / "static"
+        ]
+    16.5. AdminLTE frontend projesinin css vs js dosyalarını static altındaki klasörlere ekleyebiliriz.
+
+
+17. website => templates => partials adında bir klasör açıyoruz.
+    17.1. base.html sayfasında ki static alanları yani sabit alanları partial'lara taşıyoruz.
+
+18. aşağıda ki django kodunu base.html içerisinde tasarımı bozmayacak şekilde uygun yeri saptayarak ekliyoruz.
+  <div class="content-wrapper">
+    {% block content %}{% endblock %}
+  </div>
+
+19. website => templates => website adında bir klasör açıyoruz.
+20. website => templates => website => welcome.html dosyasını açıyoruz.
+
+23. meetings => urls.py dosyası açılır. aşağıdaki kod bloğu eklenir.
+    urlpatterns = [
+        # http://127.0.0.1:8000/meetings/detail/1
+        path('detail/<int:id>', detail, name='detail'),
+    ]
+
+24. meeting_planner => urls.py => urlpatterns listesine meetings altındaki urls inculede edilir
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+
+        # http://127.0.0.1:8000 talebi geldiğinde aşağıda ki url website altıda ki views.py dosyasında bulunan welcome fonksiyonunu tetikleyecek.
+        path('', welcome, name='welcome'),
+
+        # http://127.0.0.1:8000/about
+        path('about', about),
+
+        # http://127.0.0.1:8000/date
+        path('date', date),
+
+        # Meeting App Urls
+        path('meetings/', include('meetings.urls'))
+    ]
+
+25. meetings => views.py dosyasına aşağıdaki kod bloğunu ekleyin
+
+    def detail(request, id):
+        meeting = get_object_or_404(Meeting, pk=id)
+
+        return render(
+            request=request,
+            template_name='meetings/detail.html',
+            context={
+                'meeting': meeting
+            }
+        )
+
+26. meetings => templates klasörü yaratalım
+27. meetings => templates => meetings klasörü yaratalım
+28. meetings => templates => meetings => detail.html yaratalım
+
+29. Create Meeting işlemi
+    29.1. meetings => forms.py dosyası açılır. aşapıdaki kodlar eklenir
+
+    from django.forms import ModelForm, TextInput, DateInput, TimeInput
+    from .models import Meeting
+    from datetime import date
+    from django.core.exceptions import ValidationError
+    from string import punctuation
+
+
+    class MeetingForm(ModelForm):
+        class Meta:
+            model = Meeting
+            fields = '__all__'
+            widgets = {
+                'title': TextInput(attrs={'type': 'text'}),
+                'date': DateInput(attrs={'type': 'date'}),
+                'start_time': TimeInput(attrs={'type': 'time'}),
+                'duration': TextInput(attrs={
+                    'type': 'number',
+                    'min': 1,
+                    'max': 4
+                })
+            }
+
+        def clean_date(self):
+            """
+            Burada kullanıcının geçmiş bir zaman için toplandı organize etmesini engelleyici validasyonu yazıyoruz. Toplantı günü toplantının yaratıldığı günden önce olmaz.
+            :return:
+            """
+            d = self.cleaned_data.get('date')
+
+            if d < date.today():
+                raise ValidationError('Meeting cannot set for the past time..!')
+
+            return d
+
+        def clean_title(self):
+            """
+            Burada toplantı başlığı içerisinde noktalama işareti olmasını engelliyoruz
+            :return:
+            """
+            title = self.cleaned_data.get('title')
+
+            for c in title:
+                if c in punctuation:
+                    raise ValidationError('Meeting cannot constains punctuation..!')
+
+            return title
+
+30. meetings => views.py => create() fonksyonunu yaratalım
+
+    def create(request):
+        if request == 'POST':
+            form = MeetingForm(request.POST)
+
+            if form.is_valid():
+                form.save()
+                return redirect('welcome')
+        else:
+            form = MeetingForm()
+
+        return render(request=request,
+                      template_name='meetings/create.html',
+                      context={
+                          'form': form
+                      })
+

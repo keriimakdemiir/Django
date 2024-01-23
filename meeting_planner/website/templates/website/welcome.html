@@ -1,0 +1,61 @@
+
+
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="row mt-2 ms-auto me-auto">
+    <div class="col-sm-12">
+        <div class="h-100 p-5 text-bg-dark rounded-3">
+          <h2>{{ message }}</h2>
+          <p>There are currently <strong>{{ num_meetings }}</strong> meetings.</p>
+          <button class="btn btn-outline-light" type="button">See All Meetings</button>
+        </div>
+    </div>
+</div>
+<div class="row mt-2 ms-auto me-auto">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Meeting List</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Detail</th>
+                                <th>Update</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for meeting in meetings %}
+                            <tr>
+                                <td>{{ meeting.title }}</td>
+                                <td>{{ meeting.date }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-md btn-info">Detail</a>
+                                </td>
+                                <td>
+                                    <a href="#" class="btn btn-md btn-warning">Update</a>
+                                </td>
+                                <td>
+                                    <a href="#" class="btn btn-md btn-danger">Delete</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="#" class="btn btn-md btn-success float-end">Create New One</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
